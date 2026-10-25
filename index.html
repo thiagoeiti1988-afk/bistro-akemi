@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#2a1a0e">
+<meta name="description" content="Bistrô Akemi: um jogo aconchegante de café, jardim zen e uma vilinha do interior.">
+<meta property="og:title" content="Bistrô Akemi — Jardim & Café Zen">
+<meta property="og:description" content="Junte ingredientes, sirva a vila e decore a praça. Jogue no navegador do celular.">
+<meta property="og:image" content="https://thiagoeiti1988-afk.github.io/bistro-akemi/abertura.jpg">
+<meta property="og:type" content="website">
+<link rel="icon" href="abertura.jpg">
+<script>window.bistroTopInset = 0;</script>
+<title>Bistrô Akemi</title>
+<style>
+  /* Tela única de jogo: canvas em tela cheia sobre madeira escura; tela de carregamento em pergaminho. */
+  :root {
+    --wood: #2a1a0e;
+    --wood-2: #5c3a21;
+    --cream: #f4ead5;
+    --gold: #f2b749;
+    --matcha: #4e7a51;
+    --font-display: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--wood); color: var(--cream); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; }
+  #canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; background: var(--wood); }
+  #boot { position: fixed; inset: 0; overflow: hidden; font-family: var(--font-display); text-align: center; background: var(--wood); }
+  #boot .blur { position: absolute; inset: -40px; background: url("abertura.jpg") center / cover; filter: blur(24px) brightness(0.7); }
+  #boot .scene { position: absolute; left: 50%; top: 50%; height: 100%; aspect-ratio: 9 / 16; max-width: 100%; transform: translate(-50%, -50%);
+    background: url("abertura.jpg") center top / cover; box-shadow: 0 0 80px rgba(0,0,0,0.6); }
+  @media (max-aspect-ratio: 9/16) { #boot .scene { width: 100%; height: auto; min-height: 100%; } }
+  #boot .card { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); width: min(86%, 440px); box-sizing: border-box;
+    padding: 26px 22px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px;
+    background: linear-gradient(#f7eedb, #efe0c0); color: #5c3a21; border: 6px solid #8a5a33; border-radius: 28px;
+    box-shadow: 0 10px 0 #5c3a21, 0 18px 40px rgba(0,0,0,0.45), inset 0 0 0 3px #f2b749; animation: rise 0.7s cubic-bezier(.2,1.4,.4,1) both; }
+  #boot h1 { margin: 0; font-size: clamp(34px, 9vw, 50px); font-weight: 700; line-height: 1; color: #5c3a21; text-shadow: 0 2px 0 #fff6e4; text-wrap: balance; }
+  #boot p { margin: -4px 0 4px; color: #c46a34; font-size: 19px; font-weight: 700; letter-spacing: 0.02em; }
+  .bar { width: 100%; height: 22px; border-radius: 12px; background: #5c3a21; border: 3px solid #3d2614; overflow: hidden; box-shadow: inset 0 3px 0 rgba(0,0,0,0.3); }
+  .bar > i { display: block; height: 100%; width: 0%; border-radius: 9px; transition: width 0.25s ease;
+    background: linear-gradient(#7fb069, #4e7a51); box-shadow: inset 0 3px 0 rgba(255,255,255,0.35); }
+  #status { font-size: 16px; color: #5c3a21; opacity: 0.85; min-height: 1.4em; max-width: 34ch; }
+  #play { font: 700 24px var(--font-display); color: var(--cream); background: linear-gradient(#5e9161, #4e7a51); border: 4px solid #2f4a31;
+    border-radius: 24px; padding: 14px 44px; cursor: pointer; box-shadow: 0 6px 0 #2f4a31; text-shadow: 0 2px 0 #2f4a31; animation: pulse 1.4s ease-in-out infinite; }
+  #play:active { transform: translateY(4px); box-shadow: 0 2px 0 #2f4a31; }
+  #play:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .petal { position: absolute; top: -40px; width: 16px; height: 12px; border-radius: 12px 0 12px 0; background: #f7b8c8; opacity: 0.85; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translate(-120px, 110vh) rotate(540deg); } }
+  @keyframes rise { from { opacity: 0; transform: translate(-50%, 40px); } }
+  @keyframes pulse { 50% { transform: scale(1.05); } }
+  @media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } .petal, #play, #boot .card { animation: none; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&display=swap">
+
+</head>
+<body>
+<canvas id="canvas" tabindex="0">Seu navegador não suporta HTML5 canvas.</canvas>
+<div id="boot">
+  <div class="blur"></div>
+  <div class="scene" id="scene">
+    <div class="card">
+      <h1>Bistrô Akemi</h1>
+      <p>Jardim &amp; Café Zen</p>
+      <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+      <div id="status">Preparando o café…</div>
+      <button id="play" hidden>Entrar no Bistrô</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="index.js"></script>
+<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":19711336,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const fill = document.getElementById("fill");
+const statusEl = document.getElementById("status");
+const playBtn = document.getElementById("play");
+const boot = document.getElementById("boot");
+const engine = new Engine(GODOT_CONFIG);
+
+function setStatus(t) { statusEl.textContent = t; }
+// à noite (18h–6h) a abertura mostra o bistrô de lanternas acesas
+(function () {
+  const h = new Date().getHours();
+  if (h >= 18 || h < 6) {
+    document.querySelectorAll("#boot .scene, #boot .blur").forEach(e => e.style.backgroundImage = 'url("abertura_noite.jpg")');
+  }
+})();
+// pétalas caindo na tela de abertura
+(function () {
+  const sc = document.getElementById("scene");
+  for (let k = 0; k < 14; k++) {
+    const e = document.createElement("i");
+    e.className = "petal";
+    e.style.left = (10 + Math.random() * 100) + "%";
+    e.style.animationDuration = (6 + Math.random() * 6) + "s";
+    e.style.animationDelay = (-Math.random() * 10) + "s";
+    e.style.transform = "scale(" + (0.6 + Math.random() * 0.8) + ")";
+    if (k % 4 === 0) e.style.background = "#f5d26b";
+    sc.appendChild(e);
+  }
+})();
+
+const missing = Engine.getMissingFeatures({ threads: false });
+if (missing.length) {
+  setStatus("Este navegador não tem: " + missing.join(", ") + ". Tente o Chrome ou o Safari atualizados.");
+} else {
+  setStatus("Baixando o jogo…");
+  // Pré-carrega; o som só pode começar depois de um toque, por isso o botão "Entrar".
+  engine.init("index").then(() => Promise.all([
+    engine.preloadFile("index.pck", "index.pck"),
+  ])).then(() => {
+    fill.style.width = "100%";
+    setStatus("Pronto! Toque para entrar.");
+    playBtn.hidden = false;
+    playBtn.focus();
+  }).catch(err => setStatus("Não foi possível carregar: " + (err && err.message ? err.message : err)));
+  let fake = 0;
+  const tick = setInterval(() => { fake = Math.min(92, fake + 3); if (playBtn.hidden) fill.style.width = fake + "%"; else clearInterval(tick); }, 250);
+}
+
+playBtn.addEventListener("click", () => {
+  playBtn.disabled = true;
+  setStatus("Abrindo o Bistrô…");
+  let failed = false;
+  engine.start({ args: ["--main-pack", "index.pck"], canvas: document.getElementById("canvas") })
+    .catch(err => { failed = true; setStatus("Erro ao iniciar: " + (err && err.message ? err.message : err)); });
+  setTimeout(() => { if (!failed) boot.hidden = true; }, 1200);
+});
+</script>
+
+</body>
+</html>
